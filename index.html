@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KineKontich · Oefenschema</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root{--bg:#F4EED6;--card:#FFFDF5;--ink:#1b1b18;--mut:#6b6650;--line:#e4dcb8;--brand:#1b1b18;--p-bg:#1b1b18;--p-ink:#F8E99A;--blue:#1b1b18;--blue-s:#F8E99A;--green:#4d7c4a;--green-s:#e5eccf;--danger:#b5483f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161612;--card:#201f19;--ink:#F4EED6;--mut:#a59f84;--line:#34322a;--p-bg:#F8E99A;--p-ink:#1b1b18;--blue:#F8E99A;--blue-s:#3a3716;--green:#86b57f;--green-s:#26311f;--danger:#e08a82;color-scheme:dark}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.45;font-size:15px}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 48px}
+.tabs{display:flex;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin-bottom:18px}
+.tabs button{flex:1;border:0;background:none;color:var(--mut);padding:11px 8px;border-radius:10px;font:600 15px inherit;font-family:inherit;cursor:pointer}
+.tabs button.on{background:var(--blue-s);color:var(--blue)}
+h1{font-size:22px;margin:4px 0 2px}h2{font-size:17px;margin:0 0 12px}
+.sub{color:var(--mut);margin:0 0 18px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:12px 0 5px}
+input,textarea{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:11px 12px;font:inherit}
+input:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:0}
+textarea{min-height:70px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn{border:0;border-radius:12px;padding:13px 16px;font:600 15px inherit;font-family:inherit;cursor:pointer;width:100%}
+.btn.p{background:var(--blue);color:#fff}.btn.g{background:var(--green);color:#fff}
+.btn.s{background:var(--blue-s);color:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.vids{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.vids .btn{font-size:14px;padding:11px 8px}
+.vname{font-size:13px;color:var(--green);margin-top:6px;min-height:18px}
+.item{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-of-type{border-top:0}
+.item b{display:block}.item small{color:var(--mut)}
+.item .x{margin-left:auto;background:none;border:0;color:var(--danger);font-size:20px;cursor:pointer;padding:6px}
+.num{width:28px;height:28px;border-radius:50%;background:var(--blue-s);color:var(--blue);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+#qr{display:grid;place-items:center;padding:14px;background:#fff;border-radius:12px;width:fit-content;margin:12px auto}
+.hide{display:none}
+.prog{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin:6px 0 4px}
+.prog i{display:block;height:100%;background:var(--green);width:0;transition:width .3s}
+.ex video{width:100%;border-radius:12px;background:#000;max-height:260px}
+.novid{background:var(--blue-s);color:var(--blue);border-radius:12px;padding:26px;text-align:center;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}
+.chip{background:var(--blue-s);color:var(--blue);border-radius:20px;padding:5px 11px;font-size:13px;font-weight:600}
+.note{color:var(--mut);font-size:14px;margin:4px 0 12px}
+.check{width:100%;border:2px solid var(--green);background:none;color:var(--green);border-radius:12px;padding:13px;font:600 15px inherit;font-family:inherit;cursor:pointer}
+.check.done{background:var(--green);color:#fff}
+.done-card{border-color:var(--green)}
+.empty{text-align:center;color:var(--mut);padding:36px 12px}
+
+body{font-family:"Montserrat","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;font-weight:500}
+h1,h2{font-weight:900;letter-spacing:-.01em}
+h1{font-size:24px}
+.btn,.tabs button,.check{font-weight:700;font-size:15px}
+.btn.p,.btn.g,.tabs button.on{background:var(--p-bg);color:var(--p-ink)}
+.chip{font-weight:700}
+.hd{background:#1b1b18;color:#F4EED6;border-bottom:4px solid #F8E99A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hd{background:#0f0f0c}}
+.hd-in{max-width:560px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.logo{width:48px;height:48px;flex:none}
+.hd b{display:block;font-size:17px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.hd small{display:block;color:#F8E99A;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.outbtn{margin-left:auto;background:#F8E99A;color:#1b1b18;border:0;border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.card{box-shadow:0 1px 2px rgba(60,50,10,.06)}
+.ft{max-width:560px;margin:0 auto;padding:4px 16px 40px;text-align:center;color:var(--mut);font-size:12px;line-height:1.8}
+.ft b{font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.ft a{color:var(--ink);text-decoration:underline;text-decoration-color:#F8E99A;text-decoration-thickness:2px;font-weight:600}
+</style>
+<style>
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.err{color:var(--danger);font-size:13px;margin-top:8px}
+.link{word-break:break-all;font-size:13px;color:var(--mut);margin:8px 0}
+</style>
+</head>
+<body>
+<header class="hd"><div class="hd-in"><svg class="logo" viewBox="44 33 293 293" role="img" aria-label="KineKontich logo"><circle fill="none" stroke="#fff" cx="190.55" cy="179.51" r="141.26"/><rect fill="#fff" stroke="#fff" stroke-width=".5" x="151.16" y="153.14" width="4.41" height="125.22" rx="2.2" transform="translate(-107.64 171.64) rotate(-45)"/><rect fill="#fff" stroke="#fff" stroke-width=".5" x="138.41" y="194.48" width="4.41" height="69.29" rx="2.2" transform="translate(-120.83 166.54) rotate(-45)"/><rect fill="#fff" stroke="#fff" stroke-width=".5" x="122.5" y="232.12" width="4.41" height="24.29" rx="2.2" transform="translate(-136.2 159.72) rotate(-45)"/><rect fill="#fff" stroke="#fff" stroke-width=".5" x="227.47" y="77.45" width="4.41" height="125.22" rx="2.2" transform="translate(-31.39 204.99) rotate(-45.34)"/><rect fill="#fff" stroke="#fff" stroke-width=".5" x="240.14" y="91.98" width="4.41" height="69.29" rx="2.2" transform="translate(-18.06 210.01) rotate(-45.34)"/><rect fill="#fff" stroke="#fff" stroke-width=".5" x="255.96" y="99.24" width="4.41" height="24.29" rx="2.2" transform="translate(-2.52 216.73) rotate(-45.34)"/><rect fill="#fff" stroke="#fff" stroke-width=".5" x="138.51" y="177.44" width="108.67" height="4.41" rx="2.2" transform="translate(-70.48 190.56) rotate(-45.34)"/></svg><div><b>KineKontich</b><small>Oefenschema</small></div><button class="outbtn" id="out" style="display:none">Uitloggen</button></div></header>
+<div class="wrap">
+<div id="app"></div>
+</div>
+<footer class="ft"><b>KineKontich</b><br>Molenstraat 51, 2550 Kontich<br><a href="tel:034578301">03/457.83.01</a> · <a href="mailto:info@kinekontich.com">info@kinekontich.com</a><br>Ma–do 8.30–20.30 · vr 8.30–18.30 · weekend gesloten</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ============ VUL HIER JE SUPABASE-GEGEVENS IN ============ */
+const SUPABASE_URL = 'https://ivmvrlsqcutdgadneljb.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'sb_publishable_DEHkGNWXs5ZLwzH8IJKRVQ_f7Sy4nTy';
+/* ========================================================== */
+
+const $=id=>document.getElementById(id), app=$('app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const BUCKET='videos', MAX=50*1024*1024;
+const sid=new URLSearchParams(location.search).get('s');
+let sb;
+
+async function start(){
+  if(SUPABASE_URL.includes('JOUW')||SUPABASE_ANON_KEY.includes('JOUW')){
+    app.innerHTML='<div class="card"><h2>Nog niet ingesteld</h2><p class="sub">Vul bovenaan in <b>index.html</b> je Supabase-URL en anon-sleutel in.</p></div>';return;}
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  if(sid)return patient(sid);
+  const {data}=await sb.auth.getSession();
+  data.session?kine():login();
+}
+const vurl=p=>sb.storage.from(BUCKET).getPublicUrl(p).data.publicUrl;
+
+/* ---------- Inloggen (kine) ---------- */
+function login(){
+  $('out').style.display='none';
+  app.innerHTML=`<h1>Inloggen</h1><p class="sub">Alleen voor de kinesitherapeut.</p><div class="card">
+  <label style="margin-top:0">E-mail</label><input id="em" type="email" autocomplete="username">
+  <label>Wachtwoord</label><input id="pw" type="password" autocomplete="current-password">
+  <div class="err" id="err"></div><div style="margin-top:14px"><button class="btn p" id="go">Inloggen</button></div></div>`;
+  $('go').onclick=async()=>{
+    const {error}=await sb.auth.signInWithPassword({email:$('em').value.trim(),password:$('pw').value});
+    error?$('err').textContent='Inloggen mislukt: controleer je e-mail en wachtwoord.':kine();
+  };
+}
+$('out').onclick=async()=>{await sb.auth.signOut();login();};
+
+/* ---------- Kine-weergave ---------- */
+let exs=[],file=null;
+function kine(){
+  exs=[];file=null;$('out').style.display='';
+  app.innerHTML=`<h1>Nieuw oefenschema</h1><p class="sub">Voeg oefeningen toe en deel het schema met je patiënt.</p>
+  <div class="card"><label style="margin-top:0">Naam patiënt</label><input id="pat" placeholder="Bijv. Anna Peeters"></div>
+  <div class="card"><h2>Oefening toevoegen</h2>
+  <label style="margin-top:0">Naam van de oefening</label><input id="name" placeholder="Bijv. Brugoefening">
+  <label>Video (max. 50 MB)</label>
+  <div class="vids"><button class="btn s" id="bUp" type="button">📁 Video uploaden</button><button class="btn s" id="bCam" type="button">🎥 Video opnemen</button></div>
+  <input type="file" id="fUp" accept="video/*" class="hide"><input type="file" id="fCam" accept="video/*" capture="environment" class="hide">
+  <div class="vname" id="vname"></div>
+  <div class="row3"><div><label>Sets</label><input id="sets" type="number" min="1" value="3" inputmode="numeric"></div>
+  <div><label>Herhalingen</label><input id="reps" type="number" min="1" value="10" inputmode="numeric"></div>
+  <div><label>Keer/dag</label><input id="perDay" type="number" min="1" value="1" inputmode="numeric"></div></div>
+  <label>Dagen per week</label><input id="perWeek" type="number" min="1" max="7" value="5" inputmode="numeric">
+  <label>Extra opmerkingen</label><textarea id="note" placeholder="Bijv. Adem rustig door, stop bij pijn."></textarea>
+  <div style="margin-top:14px"><button class="btn p" id="add" type="button">+ Toevoegen aan schema</button></div></div>
+  <div class="card"><h2>Oefeningen in dit schema (<span id="cnt">0</span>)</h2><div id="list"></div></div>
+  <button class="btn g" id="gen" disabled>Genereer schema &amp; QR-code</button>
+  <div class="card hide" id="qrCard" style="margin-top:14px;text-align:center"></div>`;
+  $('bUp').onclick=()=>$('fUp').click();$('bCam').onclick=()=>$('fCam').click();
+  const pick=e=>{const f=e.target.files[0];if(!f)return;
+    if(f.size>MAX){alert('Deze video is groter dan 50 MB. Kies een kortere video.');e.target.value='';return;}
+    file=f;$('vname').textContent='✓ '+f.name;};
+  $('fUp').onchange=pick;$('fCam').onchange=pick;
+  $('add').onclick=()=>{
+    const name=$('name').value.trim();if(!name){$('name').focus();return;}
+    exs.push({name,file,sets:$('sets').value||1,reps:$('reps').value||1,perDay:$('perDay').value||1,perWeek:$('perWeek').value||1,note:$('note').value.trim()});
+    file=null;$('name').value='';$('note').value='';$('vname').textContent='';$('fUp').value='';$('fCam').value='';
+    $('qrCard').classList.add('hide');list();
+  };
+  $('gen').onclick=generate;list();
+}
+function list(){
+  $('cnt').textContent=exs.length;$('gen').disabled=!exs.length;
+  $('list').innerHTML=exs.length?exs.map((x,i)=>`<div class="item"><span class="num">${i+1}</span><div><b>${esc(x.name)}</b><small>${x.sets}×${x.reps} · ${x.perDay}× per dag · ${x.perWeek} dagen/week${x.file?' · 🎥':''}</small></div><button class="x" data-i="${i}" aria-label="Verwijderen">×</button></div>`).join(''):'<div class="empty">Nog geen oefeningen toegevoegd.</div>';
+  document.querySelectorAll('.x').forEach(b=>b.onclick=()=>{exs.splice(+b.dataset.i,1);$('qrCard').classList.add('hide');list();});
+}
+async function generate(){
+  const b=$('gen');b.disabled=true;b.textContent='Bezig met opslaan…';
+  try{
+    const {data:s,error}=await sb.from('schedules').insert({patient_name:$('pat').value.trim()}).select('id').single();
+    if(error)throw error;
+    const rows=[];
+    for(const [i,x] of exs.entries()){
+      let path=null;
+      if(x.file){
+        const ext=(x.file.name.split('.').pop()||'mp4').toLowerCase();
+        path=`${s.id}/${i}-${Date.now()}.${ext}`;
+        const {error:e}=await sb.storage.from(BUCKET).upload(path,x.file,{contentType:x.file.type||'video/mp4'});
+        if(e)throw e;
+      }
+      rows.push({schedule_id:s.id,position:i,name:x.name,video_path:path,sets:+x.sets,reps:+x.reps,per_day:+x.perDay,per_week:+x.perWeek,note:x.note});
+    }
+    const {error:e2}=await sb.from('exercises').insert(rows);if(e2)throw e2;
+    qr(s.id);
+  }catch(e){alert('Opslaan mislukt: '+(e.message||e));}
+  b.disabled=!exs.length;b.textContent='Genereer schema & QR-code';
+}
+function qr(id){
+  const link=location.origin+location.pathname+'?s='+id, c=$('qrCard');
+  c.classList.remove('hide');
+  c.innerHTML=`<h2>Schema klaar ✓</h2><p class="sub" style="margin-bottom:0">Laat de patiënt deze code scannen.</p>
+  <div id="qr"></div><div class="link">${link}</div>
+  <div class="row"><button class="btn s" id="cp">Link kopiëren</button><a class="btn s" style="text-decoration:none;text-align:center" href="${link}" target="_blank">Bekijk als patiënt</a></div>
+  <div style="margin-top:10px"><button class="btn p" id="nw">Nieuw schema maken</button></div>`;
+  new QRCode($('qr'),{text:link,width:180,height:180});
+  $('cp').onclick=async()=>{try{await navigator.clipboard.writeText(link);$('cp').textContent='Gekopieerd ✓';}catch(e){prompt('Kopieer deze link:',link);}};
+  $('nw').onclick=kine;
+  c.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+/* ---------- Patiënt-weergave ---------- */
+async function patient(id){
+  app.innerHTML='<div class="empty">Laden…</div>';
+  const {data,error}=await sb.rpc('get_schedule',{p_id:id});
+  if(error||!data){app.innerHTML='<div class="card empty">Dit schema werd niet gevonden.</div>';return;}
+  drawP(data);
+}
+function drawP(d){
+  const xs=d.exercises,n=xs.filter(x=>x.done).length,pct=xs.length?Math.round(n/xs.length*100):0,first=(d.patient_name||'').split(' ')[0];
+  app.innerHTML=`<h1>Hallo${first?' '+esc(first):''} 👋</h1><p class="sub">Dit zijn je oefeningen voor vandaag.</p>
+  <div class="card"><b>${n} van ${xs.length} gedaan</b><div class="prog"><i style="width:${pct}%"></i></div><small style="color:var(--mut)">${xs.length&&n===xs.length?'Goed gedaan, alles is af! 🎉':'Neem rustig de tijd.'}</small></div>`+
+  xs.map((x,i)=>`<div class="card ex ${x.done?'done-card':''}"><h2>${i+1}. ${esc(x.name)}</h2>
+  ${x.video_path?`<video src="${vurl(x.video_path)}" controls playsinline preload="metadata"></video>`:'<div class="novid">Geen video bij deze oefening</div>'}
+  <div class="chips"><span class="chip">${x.sets} sets</span><span class="chip">${x.reps} herhalingen</span><span class="chip">${x.per_day}× per dag</span><span class="chip">${x.per_week} dagen per week</span></div>
+  ${x.note?`<p class="note">${esc(x.note)}</p>`:''}
+  <button class="check ${x.done?'done':''}" data-id="${x.id}">${x.done?'✓ Vandaag gedaan':'Vandaag uitgevoerd'}</button></div>`).join('');
+  app.querySelectorAll('.check').forEach(b=>b.onclick=async()=>{
+    const x=xs.find(e=>e.id===b.dataset.id);x.done=!x.done;drawP(d);
+    const {error}=await sb.rpc('set_completion',{p_exercise:x.id,p_done:x.done});
+    if(error){x.done=!x.done;drawP(d);alert('Opslaan mislukt. Controleer je internetverbinding.');}
+  });
+}
+start();
+</script>
+</body>
+</html>
