@@ -133,7 +133,7 @@ function login(){
   <div class="err" id="err"></div><div style="margin-top:14px"><button class="btn p" id="go">Inloggen</button></div></div>`;
   $('go').onclick=async()=>{
     const {error}=await sb.auth.signInWithPassword({email:$('em').value.trim(),password:$('pw').value});
-    error?$('err').textContent='Inloggen mislukt: controleer je e-mail en wachtwoord.':kine();
+   error?$('err').textContent='Inloggen mislukt: '+error.message:kine();
   };
 }
 $('out').onclick=async()=>{await sb.auth.signOut();login();};
