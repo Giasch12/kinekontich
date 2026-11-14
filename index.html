@@ -72,6 +72,11 @@ h1{font-size:24px}
 .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .err{color:var(--danger);font-size:13px;margin-top:8px}
 .link{word-break:break-all;font-size:13px;color:var(--mut);margin:8px 0}
+.vids{grid-template-columns:repeat(3,1fr)}
+.qr{display:grid;place-items:center;padding:12px;background:#fff;border-radius:12px;width:fit-content;margin:12px auto}
+.qx{text-align:center}
+.ex img.m{width:100%;border-radius:12px;max-height:340px;object-fit:contain;background:#000}
+.dl{display:block;text-align:center;margin:10px 0 0;font-weight:700;color:var(--ink);text-decoration:underline;text-decoration-color:#F8E99A;text-decoration-thickness:2px}
 </style>
 </head>
 <body>
@@ -84,13 +89,14 @@ h1{font-size:24px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 /* ============ VUL HIER JE SUPABASE-GEGEVENS IN ============ */
-const SUPABASE_URL = 'https://ivmvrlsqcutdgadneljb.supabase.co';
+const SUPABASE_URL = 'https://ivmvrlsqcutdgadneljb.supabase.co/rest/v1/';
 const SUPABASE_ANON_KEY = 'sb_publishable_DEHkGNWXs5ZLwzH8IJKRVQ_f7Sy4nTy';
+const MAX_MB = 200; // maximale bestandsgrootte in MB (verhoog pas na upgrade naar Supabase Pro)
 /* ========================================================== */
 
 const $=id=>document.getElementById(id), app=$('app');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const BUCKET='videos', MAX=50*1024*1024;
+const BUCKET='videos', MAX=MAX_MB*1024*1024;
 const sid=new URLSearchParams(location.search).get('s');
 let sb;
 
@@ -102,7 +108,21 @@ async function start(){
   const {data}=await sb.auth.getSession();
   data.session?kine():login();
 }
-const vurl=p=>sb.storage.from(BUCKET).getPublicUrl(p).data.publicUrl;
+const vurl=(p,dl)=>sb.storage.from(BUCKET).getPublicUrl(p,dl?{download:true}:undefined).data.publicUrl;
+const isImg=p=>/\.(jpe?g|png|webp|gif|heic|heif)$/i.test(p||'');
+const fmt=d=>new Date(d).toLocaleDateString('nl-BE');
+const media=x=>!x.video_path?'<div class="novid">Geen video of foto bij deze oefening</div>':
+  (isImg(x.video_path)?`<img class="m" src="${vurl(x.video_path)}" alt="${esc(x.name)}">`:`<video src="${vurl(x.video_path)}" controls playsinline preload="metadata"></video>`)+`<a class="dl" href="${vurl(x.video_path,true)}">⬇️ Downloaden</a>`;
+async function wipe(ids){
+  const {data}=await sb.from('exercises').select('video_path').in('schedule_id',ids);
+  const paths=(data||[]).map(r=>r.video_path).filter(Boolean);
+  if(paths.length)await sb.storage.from(BUCKET).remove(paths);
+  await sb.from('schedules').delete().in('id',ids);
+}
+async function cleanup(){
+  const {data}=await sb.from('schedules').select('id').lt('expires_at',new Date().toISOString());
+  if(data&&data.length)await wipe(data.map(s=>s.id));
+}
 
 /* ---------- Inloggen (kine) ---------- */
 function login(){
@@ -113,22 +133,50 @@ function login(){
   <div class="err" id="err"></div><div style="margin-top:14px"><button class="btn p" id="go">Inloggen</button></div></div>`;
   $('go').onclick=async()=>{
     const {error}=await sb.auth.signInWithPassword({email:$('em').value.trim(),password:$('pw').value});
-    error?$('err').textContent='Inloggen mislukt: '+error.message:kine();
+    error?$('err').textContent='Inloggen mislukt: controleer je e-mail en wachtwoord.':kine();
   };
 }
 $('out').onclick=async()=>{await sb.auth.signOut();login();};
 
 /* ---------- Kine-weergave ---------- */
 let exs=[],file=null;
-function kine(){
-  exs=[];file=null;$('out').style.display='';
-  app.innerHTML=`<h1>Nieuw oefenschema</h1><p class="sub">Voeg oefeningen toe en deel het schema met je patiënt.</p>
+function kine(tab){
+  $('out').style.display='';cleanup();
+  app.innerHTML=`<div class="tabs"><button id="nN">Nieuw schema</button><button id="nL">Mijn schema’s</button></div><div id="main"></div>`;
+  $('nN').onclick=()=>kine('n');$('nL').onclick=()=>kine('l');
+  $('nN').className=tab==='l'?'':'on';$('nL').className=tab==='l'?'on':'';
+  return tab==='l'?overview():form();
+}
+async function overview(){
+  const box=$('main');
+  box.innerHTML='<h1>Mijn schema’s</h1><p class="sub">Schema’s verdwijnen 7 dagen na aanmaak, samen met hun video’s en foto’s.</p><div id="sl"><div class="empty">Laden…</div></div>';
+  await cleanup();
+  const {data,error}=await sb.from('schedules').select('id,patient_name,created_at,expires_at,exercises(count)').order('created_at',{ascending:false});
+  const L=$('sl');
+  if(error){L.innerHTML='<div class="err">Laden mislukt: '+esc(error.message)+'</div>';return;}
+  if(!data.length){L.innerHTML='<div class="card empty">Je hebt nog geen schema’s.</div>';return;}
+  L.innerHTML=data.map(s=>`<div class="card" data-id="${s.id}"><b>${esc(s.patient_name||'Zonder naam')}</b><div class="sub" style="margin:2px 0 10px">${(s.exercises[0]||{}).count||0} oefeningen · gemaakt ${fmt(s.created_at)} · verloopt ${fmt(s.expires_at)}</div><div class="row3"><button class="btn s sh">Link &amp; QR</button><button class="btn s ex7">+7 dagen</button><button class="btn s del">Wis</button></div><div class="qx"></div></div>`).join('');
+  L.querySelectorAll('.card').forEach(c=>{
+    const s=data.find(x=>x.id===c.dataset.id),link=location.origin+location.pathname+'?s='+s.id;
+    c.querySelector('.sh').onclick=()=>{const q=c.querySelector('.qx');if(q.innerHTML){q.innerHTML='';return;}
+      q.innerHTML='<div class="qr"></div><div class="link">'+link+'</div><button class="btn s cp">Link kopiëren</button>';
+      new QRCode(q.querySelector('.qr'),{text:link,width:160,height:160});
+      q.querySelector('.cp').onclick=async e=>{try{await navigator.clipboard.writeText(link);e.target.textContent='Gekopieerd ✓';}catch(x){prompt('Kopieer deze link:',link);}};};
+    c.querySelector('.ex7').onclick=async()=>{
+      const t=new Date(Math.max(Date.now(),+new Date(s.expires_at))+7*864e5).toISOString();
+      const {error}=await sb.from('schedules').update({expires_at:t}).eq('id',s.id);error?alert('Mislukt: '+error.message):overview();};
+    c.querySelector('.del').onclick=async()=>{if(!confirm('Dit schema en de bijhorende video’s en foto’s definitief wissen?'))return;await wipe([s.id]);overview();};
+  });
+}
+function form(){
+  exs=[];file=null;
+  $('main').innerHTML=`<h1>Nieuw oefenschema</h1><p class="sub">Voeg oefeningen toe en deel het schema met je patiënt.</p>
   <div class="card"><label style="margin-top:0">Naam patiënt</label><input id="pat" placeholder="Bijv. Anna Peeters"></div>
   <div class="card"><h2>Oefening toevoegen</h2>
   <label style="margin-top:0">Naam van de oefening</label><input id="name" placeholder="Bijv. Brugoefening">
-  <label>Video (max. 50 MB)</label>
-  <div class="vids"><button class="btn s" id="bUp" type="button">📁 Video uploaden</button><button class="btn s" id="bCam" type="button">🎥 Video opnemen</button></div>
-  <input type="file" id="fUp" accept="video/*" class="hide"><input type="file" id="fCam" accept="video/*" capture="environment" class="hide">
+  <label>Video of foto (max. ${MAX_MB} MB)</label>
+  <div class="vids"><button class="btn s" id="bUp" type="button">📁 Uploaden</button><button class="btn s" id="bCam" type="button">🎥 Video</button><button class="btn s" id="bPh" type="button">📷 Foto</button></div>
+  <input type="file" id="fUp" accept="video/*,image/*" class="hide"><input type="file" id="fCam" accept="video/*" capture="environment" class="hide"><input type="file" id="fPh" accept="image/*" capture="environment" class="hide">
   <div class="vname" id="vname"></div>
   <div class="row3"><div><label>Sets</label><input id="sets" type="number" min="1" value="3" inputmode="numeric"></div>
   <div><label>Herhalingen</label><input id="reps" type="number" min="1" value="10" inputmode="numeric"></div>
@@ -139,22 +187,22 @@ function kine(){
   <div class="card"><h2>Oefeningen in dit schema (<span id="cnt">0</span>)</h2><div id="list"></div></div>
   <button class="btn g" id="gen" disabled>Genereer schema &amp; QR-code</button>
   <div class="card hide" id="qrCard" style="margin-top:14px;text-align:center"></div>`;
-  $('bUp').onclick=()=>$('fUp').click();$('bCam').onclick=()=>$('fCam').click();
+  $('bUp').onclick=()=>$('fUp').click();$('bCam').onclick=()=>$('fCam').click();$('bPh').onclick=()=>$('fPh').click();
   const pick=e=>{const f=e.target.files[0];if(!f)return;
-    if(f.size>MAX){alert('Deze video is groter dan 50 MB. Kies een kortere video.');e.target.value='';return;}
+    if(f.size>MAX){alert('Dit bestand is groter dan '+MAX_MB+' MB. Kies een kleiner bestand.');e.target.value='';return;}
     file=f;$('vname').textContent='✓ '+f.name;};
-  $('fUp').onchange=pick;$('fCam').onchange=pick;
+  $('fUp').onchange=pick;$('fCam').onchange=pick;$('fPh').onchange=pick;
   $('add').onclick=()=>{
     const name=$('name').value.trim();if(!name){$('name').focus();return;}
     exs.push({name,file,sets:$('sets').value||1,reps:$('reps').value||1,perDay:$('perDay').value||1,perWeek:$('perWeek').value||1,note:$('note').value.trim()});
-    file=null;$('name').value='';$('note').value='';$('vname').textContent='';$('fUp').value='';$('fCam').value='';
+    file=null;$('name').value='';$('note').value='';$('vname').textContent='';$('fUp').value='';$('fCam').value='';$('fPh').value='';
     $('qrCard').classList.add('hide');list();
   };
   $('gen').onclick=generate;list();
 }
 function list(){
   $('cnt').textContent=exs.length;$('gen').disabled=!exs.length;
-  $('list').innerHTML=exs.length?exs.map((x,i)=>`<div class="item"><span class="num">${i+1}</span><div><b>${esc(x.name)}</b><small>${x.sets}×${x.reps} · ${x.perDay}× per dag · ${x.perWeek} dagen/week${x.file?' · 🎥':''}</small></div><button class="x" data-i="${i}" aria-label="Verwijderen">×</button></div>`).join(''):'<div class="empty">Nog geen oefeningen toegevoegd.</div>';
+  $('list').innerHTML=exs.length?exs.map((x,i)=>`<div class="item"><span class="num">${i+1}</span><div><b>${esc(x.name)}</b><small>${x.sets}×${x.reps} · ${x.perDay}× per dag · ${x.perWeek} dagen/week${x.file?(x.file.type.startsWith('image')?' · 📷':' · 🎥'):''}</small></div><button class="x" data-i="${i}" aria-label="Verwijderen">×</button></div>`).join(''):'<div class="empty">Nog geen oefeningen toegevoegd.</div>';
   document.querySelectorAll('.x').forEach(b=>b.onclick=()=>{exs.splice(+b.dataset.i,1);$('qrCard').classList.add('hide');list();});
 }
 async function generate(){
@@ -181,7 +229,7 @@ async function generate(){
 function qr(id){
   const link=location.origin+location.pathname+'?s='+id, c=$('qrCard');
   c.classList.remove('hide');
-  c.innerHTML=`<h2>Schema klaar ✓</h2><p class="sub" style="margin-bottom:0">Laat de patiënt deze code scannen.</p>
+  c.innerHTML=`<h2>Schema klaar ✓</h2><p class="sub" style="margin-bottom:0">Laat de patiënt deze code scannen. Het schema is 7 dagen beschikbaar.</p>
   <div id="qr"></div><div class="link">${link}</div>
   <div class="row"><button class="btn s" id="cp">Link kopiëren</button><a class="btn s" style="text-decoration:none;text-align:center" href="${link}" target="_blank">Bekijk als patiënt</a></div>
   <div style="margin-top:10px"><button class="btn p" id="nw">Nieuw schema maken</button></div>`;
@@ -196,14 +244,15 @@ async function patient(id){
   app.innerHTML='<div class="empty">Laden…</div>';
   const {data,error}=await sb.rpc('get_schedule',{p_id:id});
   if(error||!data){app.innerHTML='<div class="card empty">Dit schema werd niet gevonden.</div>';return;}
+  if(data.expired){app.innerHTML='<div class="card empty">Dit schema is verlopen.<br>Vraag je kinesitherapeut om een nieuw schema.</div>';return;}
   drawP(data);
 }
 function drawP(d){
   const xs=d.exercises,n=xs.filter(x=>x.done).length,pct=xs.length?Math.round(n/xs.length*100):0,first=(d.patient_name||'').split(' ')[0];
-  app.innerHTML=`<h1>Hallo${first?' '+esc(first):''} 👋</h1><p class="sub">Dit zijn je oefeningen voor vandaag.</p>
+  app.innerHTML=`<h1>Hallo${first?' '+esc(first):''} 👋</h1><p class="sub">Dit zijn je oefeningen voor vandaag.${d.expires_at?' Beschikbaar tot '+fmt(d.expires_at)+'.':''}</p>
   <div class="card"><b>${n} van ${xs.length} gedaan</b><div class="prog"><i style="width:${pct}%"></i></div><small style="color:var(--mut)">${xs.length&&n===xs.length?'Goed gedaan, alles is af! 🎉':'Neem rustig de tijd.'}</small></div>`+
   xs.map((x,i)=>`<div class="card ex ${x.done?'done-card':''}"><h2>${i+1}. ${esc(x.name)}</h2>
-  ${x.video_path?`<video src="${vurl(x.video_path)}" controls playsinline preload="metadata"></video>`:'<div class="novid">Geen video bij deze oefening</div>'}
+  ${media(x)}
   <div class="chips"><span class="chip">${x.sets} sets</span><span class="chip">${x.reps} herhalingen</span><span class="chip">${x.per_day}× per dag</span><span class="chip">${x.per_week} dagen per week</span></div>
   ${x.note?`<p class="note">${esc(x.note)}</p>`:''}
   <button class="check ${x.done?'done':''}" data-id="${x.id}">${x.done?'✓ Vandaag gedaan':'Vandaag uitgevoerd'}</button></div>`).join('');
