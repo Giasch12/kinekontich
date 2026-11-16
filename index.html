@@ -88,8 +88,9 @@ h1{font-size:24px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
+if(location.protocol==='http:'&&location.hostname!=='localhost')location.replace('https:'+location.href.substring(5));
 /* ============ VUL HIER JE SUPABASE-GEGEVENS IN ============ */
-const SUPABASE_URL = 'https://ivmvrlsqcutdgadneljb.supabase.co/rest/v1/';
+const SUPABASE_URL = 'https://ivmvrlsqcutdgadneljb.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_DEHkGNWXs5ZLwzH8IJKRVQ_f7Sy4nTy';
 const MAX_MB = 200; // maximale bestandsgrootte in MB (verhoog pas na upgrade naar Supabase Pro)
 /* ========================================================== */
