@@ -87,12 +87,13 @@ h1{font-size:24px}
 <footer class="ft"><b>KineKontich</b><br>Molenstraat 51, 2550 Kontich<br><a href="tel:034578301">03/457.83.01</a> · <a href="mailto:info@kinekontich.com">info@kinekontich.com</a><br>Ma–do 8.30–20.30 · vr 8.30–18.30 · weekend gesloten</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-if(location.protocol==='http:'&&location.hostname!=='localhost')location.replace('https:'+location.href.substring(5));
 /* ============ VUL HIER JE SUPABASE-GEGEVENS IN ============ */
 const SUPABASE_URL = 'https://ivmvrlsqcutdgadneljb.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_DEHkGNWXs5ZLwzH8IJKRVQ_f7Sy4nTy';
-const MAX_MB = 200; // maximale bestandsgrootte in MB (verhoog pas na upgrade naar Supabase Pro)
+const MAX_MB = 200; // maximale bestandsgrootte in MB (moet overeenkomen met de limiet in Supabase)
+const DAGEN = 14; // aantal dagen dat een schema beschikbaar blijft (zelfde als in supabase-update.sql)
 /* ========================================================== */
 
 const $=id=>document.getElementById(id), app=$('app');
@@ -134,7 +135,7 @@ function login(){
   <div class="err" id="err"></div><div style="margin-top:14px"><button class="btn p" id="go">Inloggen</button></div></div>`;
   $('go').onclick=async()=>{
     const {error}=await sb.auth.signInWithPassword({email:$('em').value.trim(),password:$('pw').value});
-   error?$('err').textContent='Inloggen mislukt: '+error.message:kine();
+    error?$('err').textContent='Inloggen mislukt: '+error.message:kine();
   };
 }
 $('out').onclick=async()=>{await sb.auth.signOut();login();};
@@ -150,13 +151,13 @@ function kine(tab){
 }
 async function overview(){
   const box=$('main');
-  box.innerHTML='<h1>Mijn schema’s</h1><p class="sub">Schema’s verdwijnen 7 dagen na aanmaak, samen met hun video’s en foto’s.</p><div id="sl"><div class="empty">Laden…</div></div>';
+  box.innerHTML='<h1>Mijn schema’s</h1><p class="sub">Schema’s verdwijnen '+DAGEN+' dagen na aanmaak, samen met hun video’s en foto’s.</p><div id="sl"><div class="empty">Laden…</div></div>';
   await cleanup();
   const {data,error}=await sb.from('schedules').select('id,patient_name,created_at,expires_at,exercises(count)').order('created_at',{ascending:false});
   const L=$('sl');
   if(error){L.innerHTML='<div class="err">Laden mislukt: '+esc(error.message)+'</div>';return;}
   if(!data.length){L.innerHTML='<div class="card empty">Je hebt nog geen schema’s.</div>';return;}
-  L.innerHTML=data.map(s=>`<div class="card" data-id="${s.id}"><b>${esc(s.patient_name||'Zonder naam')}</b><div class="sub" style="margin:2px 0 10px">${(s.exercises[0]||{}).count||0} oefeningen · gemaakt ${fmt(s.created_at)} · verloopt ${fmt(s.expires_at)}</div><div class="row3"><button class="btn s sh">Link &amp; QR</button><button class="btn s ex7">+7 dagen</button><button class="btn s del">Wis</button></div><div class="qx"></div></div>`).join('');
+  L.innerHTML=data.map(s=>`<div class="card" data-id="${s.id}"><b>${esc(s.patient_name||'Zonder naam')}</b><div class="sub" style="margin:2px 0 10px">${(s.exercises[0]||{}).count||0} oefeningen · gemaakt ${fmt(s.created_at)} · verloopt ${fmt(s.expires_at)}</div><div class="row3"><button class="btn s sh">Link &amp; QR</button><button class="btn s ex7">+${DAGEN} dagen</button><button class="btn s del">Wis</button></div><div class="qx"></div></div>`).join('');
   L.querySelectorAll('.card').forEach(c=>{
     const s=data.find(x=>x.id===c.dataset.id),link=location.origin+location.pathname+'?s='+s.id;
     c.querySelector('.sh').onclick=()=>{const q=c.querySelector('.qx');if(q.innerHTML){q.innerHTML='';return;}
@@ -164,7 +165,7 @@ async function overview(){
       new QRCode(q.querySelector('.qr'),{text:link,width:160,height:160});
       q.querySelector('.cp').onclick=async e=>{try{await navigator.clipboard.writeText(link);e.target.textContent='Gekopieerd ✓';}catch(x){prompt('Kopieer deze link:',link);}};};
     c.querySelector('.ex7').onclick=async()=>{
-      const t=new Date(Math.max(Date.now(),+new Date(s.expires_at))+7*864e5).toISOString();
+      const t=new Date(Math.max(Date.now(),+new Date(s.expires_at))+DAGEN*864e5).toISOString();
       const {error}=await sb.from('schedules').update({expires_at:t}).eq('id',s.id);error?alert('Mislukt: '+error.message):overview();};
     c.querySelector('.del').onclick=async()=>{if(!confirm('Dit schema en de bijhorende video’s en foto’s definitief wissen?'))return;await wipe([s.id]);overview();};
   });
@@ -230,7 +231,7 @@ async function generate(){
 function qr(id){
   const link=location.origin+location.pathname+'?s='+id, c=$('qrCard');
   c.classList.remove('hide');
-  c.innerHTML=`<h2>Schema klaar ✓</h2><p class="sub" style="margin-bottom:0">Laat de patiënt deze code scannen. Het schema is 7 dagen beschikbaar.</p>
+  c.innerHTML=`<h2>Schema klaar ✓</h2><p class="sub" style="margin-bottom:0">Laat de patiënt deze code scannen. Het schema is ${DAGEN} dagen beschikbaar.</p>
   <div id="qr"></div><div class="link">${link}</div>
   <div class="row"><button class="btn s" id="cp">Link kopiëren</button><a class="btn s" style="text-decoration:none;text-align:center" href="${link}" target="_blank">Bekijk als patiënt</a></div>
   <div style="margin-top:10px"><button class="btn p" id="nw">Nieuw schema maken</button></div>`;
@@ -248,15 +249,37 @@ async function patient(id){
   if(data.expired){app.innerHTML='<div class="card empty">Dit schema is verlopen.<br>Vraag je kinesitherapeut om een nieuw schema.</div>';return;}
   drawP(data);
 }
+async function downloadAll(xs,btn){
+  const items=xs.filter(x=>x.video_path),old=btn.textContent;btn.disabled=true;
+  try{
+    const zip=new JSZip();
+    for(const [i,x] of items.entries()){
+      btn.textContent='Bezig… '+(i+1)+' van '+items.length;
+      const r=await fetch(vurl(x.video_path));
+      if(!r.ok)throw new Error('download');
+      const ext=(x.video_path.split('.').pop()||'mp4').toLowerCase();
+      const nm=(x.name||'oefening').replace(/[^\w\-]+/g,'_');
+      zip.file((i+1)+'-'+nm+'.'+ext,await r.blob());
+    }
+    btn.textContent='Zip maken…';
+    const blob=await zip.generateAsync({type:'blob',compression:'STORE'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='oefeningen.zip';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+    btn.textContent='✓ Gedownload';
+  }catch(e){alert('Alles downloaden lukte niet. Download de oefeningen één voor één.');btn.textContent=old;}
+  btn.disabled=false;
+}
 function drawP(d){
   const xs=d.exercises,n=xs.filter(x=>x.done).length,pct=xs.length?Math.round(n/xs.length*100):0,first=(d.patient_name||'').split(' ')[0];
   app.innerHTML=`<h1>Hallo${first?' '+esc(first):''} 👋</h1><p class="sub">Dit zijn je oefeningen voor vandaag.${d.expires_at?' Beschikbaar tot '+fmt(d.expires_at)+'.':''}</p>
-  <div class="card"><b>${n} van ${xs.length} gedaan</b><div class="prog"><i style="width:${pct}%"></i></div><small style="color:var(--mut)">${xs.length&&n===xs.length?'Goed gedaan, alles is af! 🎉':'Neem rustig de tijd.'}</small></div>`+
+  <div class="card"><b>${n} van ${xs.length} gedaan</b><div class="prog"><i style="width:${pct}%"></i></div><small style="color:var(--mut)">${xs.length&&n===xs.length?'Goed gedaan, alles is af! 🎉':'Neem rustig de tijd.'}</small></div>${xs.filter(x=>x.video_path).length>1?'<button class="btn s" id="dlAll" style="margin-bottom:14px">⬇️ Alles downloaden (zip)</button>':''}`+
   xs.map((x,i)=>`<div class="card ex ${x.done?'done-card':''}"><h2>${i+1}. ${esc(x.name)}</h2>
   ${media(x)}
   <div class="chips"><span class="chip">${x.sets} sets</span><span class="chip">${x.reps} herhalingen</span><span class="chip">${x.per_day}× per dag</span><span class="chip">${x.per_week} dagen per week</span></div>
   ${x.note?`<p class="note">${esc(x.note)}</p>`:''}
   <button class="check ${x.done?'done':''}" data-id="${x.id}">${x.done?'✓ Vandaag gedaan':'Vandaag uitgevoerd'}</button></div>`).join('');
+  const da=$('dlAll');if(da)da.onclick=()=>downloadAll(xs,da);
   app.querySelectorAll('.check').forEach(b=>b.onclick=async()=>{
     const x=xs.find(e=>e.id===b.dataset.id);x.done=!x.done;drawP(d);
     const {error}=await sb.rpc('set_completion',{p_exercise:x.id,p_done:x.done});
