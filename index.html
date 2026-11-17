@@ -75,6 +75,7 @@ h1{font-size:24px}
 .vids{grid-template-columns:repeat(3,1fr)}
 .qr{display:grid;place-items:center;padding:12px;background:#fff;border-radius:12px;width:fit-content;margin:12px auto}
 .qx{text-align:center}
+.mb{text-align:left;margin-top:14px}
 .ex img.m{width:100%;border-radius:12px;max-height:340px;object-fit:contain;background:#000}
 .dl{display:block;text-align:center;margin:10px 0 0;font-weight:700;color:var(--ink);text-decoration:underline;text-decoration-color:#F8E99A;text-decoration-thickness:2px}
 </style>
@@ -93,6 +94,7 @@ h1{font-size:24px}
 const SUPABASE_URL = 'https://ivmvrlsqcutdgadneljb.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_DEHkGNWXs5ZLwzH8IJKRVQ_f7Sy4nTy';
 const MAX_MB = 200; // maximale bestandsgrootte in MB (moet overeenkomen met de limiet in Supabase)
+const MAIL_ACCOUNT = ''; // optioneel: Gmail-adres waarmee de e-mail opent, bijv. 'info@kinekontich.com' (leeg = standaardaccount)
 const DAGEN = 14; // aantal dagen dat een schema beschikbaar blijft (zelfde als in supabase-update.sql)
 /* ========================================================== */
 
@@ -115,6 +117,18 @@ const isImg=p=>/\.(jpe?g|png|webp|gif|heic|heif)$/i.test(p||'');
 const fmt=d=>new Date(d).toLocaleDateString('nl-BE');
 const media=x=>!x.video_path?'<div class="novid">Geen video of foto bij deze oefening</div>':
   (isImg(x.video_path)?`<img class="m" src="${vurl(x.video_path)}" alt="${esc(x.name)}">`:`<video src="${vurl(x.video_path)}" controls playsinline preload="metadata"></video>`)+`<a class="dl" href="${vurl(x.video_path,true)}">⬇️ Downloaden</a>`;
+function mailPanel(box,link){
+  box.innerHTML='<label>Link mailen naar patiënt</label><input type="email" placeholder="e-mailadres patiënt" autocomplete="off"><div class="row3" style="margin-top:8px"><button class="btn s" type="button">Gmail</button><button class="btn s" type="button">Mail-app</button><button class="btn s" type="button">Kopieer</button></div>';
+  const inp=box.querySelector('input'),[bg,bm,bc]=box.querySelectorAll('button');
+  const msg=()=>({s:'Je oefenschema van KineKontich',b:'Beste patiënt,\n\nHierbij je persoonlijk oefenschema van KineKontich. Open de link op je gsm om de video’s en foto’s te bekijken en je oefeningen af te vinken:\n\n'+link+'\n\nHet schema is '+DAGEN+' dagen beschikbaar, maar je kan het ook downloaden. \n\nVragen? Stuur een mail naar: info@kinekontich.com.\n\nMet vriendelijke groeten,\nTeam KineKontich\nMolenstraat 51, 2550 Kontich'});
+  const ok=()=>{const v=inp.value.trim();if(!/^\S+@\S+\.\S+$/.test(v)){alert('Vul een geldig e-mailadres in.');inp.focus();return null;}return v;};
+  bg.onclick=()=>{const to=ok();if(!to)return;const m=msg();
+    window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(to)+'&su='+encodeURIComponent(m.s)+'&body='+encodeURIComponent(m.b)+(MAIL_ACCOUNT?'&authuser='+encodeURIComponent(MAIL_ACCOUNT):''),'_blank');};
+  bm.onclick=()=>{const to=ok();if(!to)return;const m=msg();
+    location.href='mailto:'+to+'?subject='+encodeURIComponent(m.s)+'&body='+encodeURIComponent(m.b.replace(/\n/g,'\r\n'));};
+  bc.onclick=async()=>{const m=msg(),t=m.s+'\n\n'+m.b;
+    try{await navigator.clipboard.writeText(t);bc.textContent='Gekopieerd ✓';}catch(e){prompt('Kopieer dit bericht:',t);}};
+}
 async function wipe(ids){
   const {data}=await sb.from('exercises').select('video_path').in('schedule_id',ids);
   const paths=(data||[]).map(r=>r.video_path).filter(Boolean);
@@ -161,8 +175,8 @@ async function overview(){
   L.querySelectorAll('.card').forEach(c=>{
     const s=data.find(x=>x.id===c.dataset.id),link=location.origin+location.pathname+'?s='+s.id;
     c.querySelector('.sh').onclick=()=>{const q=c.querySelector('.qx');if(q.innerHTML){q.innerHTML='';return;}
-      q.innerHTML='<div class="qr"></div><div class="link">'+link+'</div><button class="btn s cp">Link kopiëren</button>';
-      new QRCode(q.querySelector('.qr'),{text:link,width:160,height:160});
+      q.innerHTML='<div class="qr"></div><div class="link">'+link+'</div><button class="btn s cp">Link kopiëren</button><div class="mb"></div>';
+      new QRCode(q.querySelector('.qr'),{text:link,width:160,height:160});mailPanel(q.querySelector('.mb'),link);
       q.querySelector('.cp').onclick=async e=>{try{await navigator.clipboard.writeText(link);e.target.textContent='Gekopieerd ✓';}catch(x){prompt('Kopieer deze link:',link);}};};
     c.querySelector('.ex7').onclick=async()=>{
       const t=new Date(Math.max(Date.now(),+new Date(s.expires_at))+DAGEN*864e5).toISOString();
@@ -232,10 +246,10 @@ function qr(id){
   const link=location.origin+location.pathname+'?s='+id, c=$('qrCard');
   c.classList.remove('hide');
   c.innerHTML=`<h2>Schema klaar ✓</h2><p class="sub" style="margin-bottom:0">Laat de patiënt deze code scannen. Het schema is ${DAGEN} dagen beschikbaar.</p>
-  <div id="qr"></div><div class="link">${link}</div>
+  <div id="qr"></div><div class="link">${link}</div><div id="mb" class="mb"></div>
   <div class="row"><button class="btn s" id="cp">Link kopiëren</button><a class="btn s" style="text-decoration:none;text-align:center" href="${link}" target="_blank">Bekijk als patiënt</a></div>
   <div style="margin-top:10px"><button class="btn p" id="nw">Nieuw schema maken</button></div>`;
-  new QRCode($('qr'),{text:link,width:180,height:180});
+  new QRCode($('qr'),{text:link,width:180,height:180});mailPanel($('mb'),link);
   $('cp').onclick=async()=>{try{await navigator.clipboard.writeText(link);$('cp').textContent='Gekopieerd ✓';}catch(e){prompt('Kopieer deze link:',link);}};
   $('nw').onclick=kine;
   c.scrollIntoView({behavior:'smooth',block:'center'});
